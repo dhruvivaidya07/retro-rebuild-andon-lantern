@@ -1,100 +1,134 @@
-# 🏮 RETRO REBUILD — Andon
+# 🏮 RETRO REBUILD — ANDON
 
-> Reimagining a simple flashlight/lantern interface with the look and feel of another time.
+<p align="center">
+  <strong>Rebuilding a digital experience through the visual language of another era.</strong>
+</p>
 
-This project was created as part of **RETRO REBUILD**, where we were given an app concept and an era and had to rebuild its interface around that theme.
+<p align="center">
+  A team-built interactive Andon lantern experience created for the <b>RETRO REBUILD</b> competition.
+</p>
 
-For my project, I recreated an **Andon-inspired lantern interface** with a strong Japanese traditional aesthetic. The idea was to take something as simple as turning a light on and off and make the whole experience feel like an old physical lantern rather than a modern digital flashlight app.
+<p align="center">
+  <a href="YOUR_LIVE_DEMO_LINK">🌐 Live Demo</a>
+  &nbsp;&nbsp;•&nbsp;&nbsp;
+  <a href="YOUR_GITHUB_REPO_LINK">💻 Source Code</a>
+</p>
 
-I focused on the small details — the typography, colors, lantern shape, pull cord, screen transitions, controls, and subtle animations — so that the interface feels like one complete experience instead of just a modern webpage with an old-looking background.
+---
 
-## ✨ What I Built
+## 🏮 The Idea
 
-The interface includes:
+What happens when a simple flashlight stops feeling like a flashlight?
 
-* 🏮 Interactive lantern with on/off functionality
-* 🪢 Pull-cord interaction
-* 🔆 Different lighting modes
-* 🛢️ Adjustable oil level
-* 🌸 Falling sakura/petal animation
-* 📱 Responsive layout for different screen sizes
-* 🧭 Bottom navigation between different sections
-* 🎨 Japanese-inspired typography and visual styling
-* ⚡ Smooth transitions and interactive UI elements
+For **RETRO REBUILD**, our team was given an app concept and a specific era to reinterpret. Instead of approaching the challenge as a normal modern web app, we decided to turn the experience into something that feels much more **physical, atmospheric, and timeless**.
 
-The entire project is built as a **single HTML file**, so there is no complicated setup required to run it.
+Our concept was inspired by the **Japanese Andon lantern**.
 
-## 🎨 The Idea Behind It
+The goal wasn't simply to draw a lantern on a webpage.
 
-One of the interesting parts of this challenge was that the goal wasn't simply to make an app that works.
+We wanted the user to feel like they were actually interacting with one.
 
-The interface also had to **feel like it belonged to its chosen era**.
+The result is an interactive lantern interface built around warm light, traditional-inspired typography, subtle movement, and physical-style interactions.
 
-Instead of using the usual modern flashlight controls, I tried to make the interaction more physical. The pull cord, warm lantern glow, traditional typography, muted colors, and decorative details were all used to support that idea.
+---
 
-It was a fun exercise in thinking about UI as more than just buttons and screens — the visual language and interaction itself can communicate a story.
+## ✨ What We Built
+
+The experience combines a visual lantern interface with interactive controls and small details designed to make the whole page feel alive.
+
+### 🏮 Interactive Lantern
+
+The central lantern acts as the main focus of the experience.
+
+Users can turn the light on and off and interact with the lantern rather than simply pressing a conventional flashlight button.
+
+### 🪢 Pull Cord Interaction
+
+Instead of using a standard toggle, we introduced a **pull-cord interaction** inspired by the physical controls of traditional lamps.
+
+### 🔆 Lighting Modes
+
+Different lighting modes allow the user to change the atmosphere of the lantern.
+
+### 🛢️ Oil Level
+
+An interactive oil-level control adds another layer to the lantern concept and makes the interface feel less like a conventional digital flashlight.
+
+### 🌸 Ambient Animation
+
+Subtle falling-petal animations add movement to the environment without taking attention away from the main interaction.
+
+### 📱 Responsive Design
+
+The interface adapts to different screen sizes while keeping the lantern as the visual center of the experience.
+
+---
+
+## 🎨 Design Direction
+
+We wanted every part of the interface to support the same idea.
+
+| Element | Direction |
+| --- | --- |
+| 🏮 Main Object | Traditional Andon-inspired lantern |
+| 🎨 Visual Style | Warm, minimal and atmospheric |
+| ✍️ Typography | Japanese-inspired typography |
+| 💡 Lighting | Soft ambient glow |
+| 🪢 Interaction | Physical-style controls |
+| 🌸 Motion | Subtle environmental animation |
+| 📱 Layout | Responsive and focused |
+
+The design was intentionally kept away from the typical modern "flashlight app" look.
+
+Instead of filling the screen with buttons and controls, we used the **lantern itself as the main interface**.
+
+---
+
+## 🎮 Interaction
+
+The project was designed around the idea that **interaction should be part of the visual experience**.
+
+You can:
+
+- Turn the lantern on and off
+- Pull the cord
+- Change lighting modes
+- Adjust the oil level
+- Navigate between different sections
+- Experience ambient animations
+
+These interactions were kept simple, but they give the interface a more physical feeling.
+
+---
 
 ## 🛠️ Built With
 
-* **HTML5**
-* **CSS3**
-* **Vanilla JavaScript**
-* **Google Fonts**
-* CSS animations and transitions
+This project was intentionally kept lightweight.
 
-No frameworks or external JavaScript libraries were required.
+### Frontend
+
+- **HTML5**
+- **CSS3**
+- **Vanilla JavaScript**
+
+### Design & Experience
+
+- CSS animations
+- CSS transitions
+- Responsive layouts
+- Custom UI styling
+- Google Fonts
+
+No framework was required for the final experience.
+
+The entire interface is contained within a single HTML file, making it easy to run and deploy.
+
+---
 
 ## 📂 Project Structure
 
 ```text
-retro-rebuild-andon/
+retro-rebuild-andon-lantern/
 │
 ├── index.html
 └── README.md
-```
-
-The main interface, styling, and JavaScript functionality are all contained inside `index.html`.
-
-## 🚀 Running the Project
-
-You don't need to install anything.
-
-Simply open `index.html` in a browser.
-
-That's it.
-
-The project is also deployed using **GitHub Pages**, so it can be accessed directly through the live demo link below.
-
-## 🌐 Live Demo
-
-**Live Demo:**
-Add your GitHub Pages link here
-
-## 📸 Project
-
-The project was created during the **RETRO REBUILD** event, where AI tools were allowed as part of the development process.
-
-The challenge was especially interesting because it wasn't just about writing code — it was about taking an idea, making design decisions, experimenting with interactions, and turning the result into something that actually feels intentional.
-
-## 💭 What I Learned
-
-Working on this project made me pay more attention to the relationship between **design and interaction**.
-
-Small things that might seem insignificant — like the way a light turns on, how a control is positioned, or how an animation moves — can completely change how an interface feels.
-
-I also got more comfortable with building an interactive UI using plain HTML, CSS, and JavaScript without relying on a large framework.
-
-Most importantly, I enjoyed the process of experimenting and seeing how far a simple concept could be pushed when the design has a clear direction.
-
-## 🙌 About RETRO REBUILD
-
-**RETRO REBUILD** was a fun challenge that encouraged participants to take an existing app idea and reinterpret it through the visual language of a particular era.
-
-It was a great opportunity to experiment with UI design, frontend development, creativity, and AI-assisted development — all while working within a specific design direction.
-
----
-
-### Made for RETRO REBUILD 🏮
-
-Built with curiosity, a lot of experimentation, and plenty of tweaking.
-

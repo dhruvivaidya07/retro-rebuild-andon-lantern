@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>行灯 Andon — 灯りを引く</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600;800&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --washi:#F4EAD8;
+    --washi-dark:#E6D7B8;
+    --washi-line:#D9C7A1;
+    --ai:#213D5F;
+    --ai-deep:#142337;
+    --ai-mid:#2E507A;
+    --shu:#BD3B24;
+    --shu-dark:#8B2A19;
+    --ember:#E7A94A;
+    --ember-light:#F8D98C;
+    --ember-hot:#FFEDBE;
+    --sakura:#F3C7D3;
+    --sakura-deep:#E28FA6;
+    --sakura-line:#D8748F;
+    --ink:#2A231D;
+    --oil:0.65;
+    --lit:0;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    min-height:100vh;
+    font-family:'Noto Sans JP', sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(ellipse at 20% -10%, rgba(226,143,166,0.18), transparent 55%),
+      radial-gradient(ellipse at 100% 110%, rgba(33,61,95,0.10), transparent 50%),
+      var(--washi);
+    overflow-x:hidden;
+    -webkit-tap-highlight-color:transparent;
+  }
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    opacity:0.5;
+    mix-blend-mode:multiply;
+    background-image:
+      repeating-linear-gradient(90deg, rgba(217,199,161,0.35) 0px, transparent 1px, transparent 3px),
+      repeating-linear-gradient(0deg, rgba(217,199,161,0.25) 0px, transparent 1px, transparent 4px);
+    z-index:0;
+  }
+
+  /* ambient glow cast by the lantern across the whole page */
+  #ambientGlow{
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:1;
+    opacity:0;
+    background:
+      radial-gradient(ellipse 60% 45% at 50% 40%, rgba(231,169,74,0.55), rgba(231,169,74,0) 70%);
+    transition:opacity .35s ease;
+  }
+
+  .petals{
+    position:fixed; inset:0; overflow:hidden; pointer-events:none; z-index:2;
+  }
+  .petal{
+    position:absolute; top:-5vh;
+    width:12px; height:12px;
+    background:radial-gradient(circle at 30% 30%, var(--sakura), var(--sakura-deep));
+    border-radius:60% 40% 60% 40%/40% 60% 40% 60%;
+    opacity:0.85;
+    animation-name:fall;
+    animation-timing-function:linear;
+    animation-iteration-count:1;
+    box-shadow:0 0 4px rgba(226,143,166,0.4);
+  }
+  @keyframes fall{
+    0%{ transform:translate(0,-8vh) rotate(0deg); opacity:0; }
+    8%{ opacity:.9; }
+    50%{ transform:translate(var(--sway,24px), 55vh) rotate(180deg); }
+    100%{ transform:translate(calc(var(--sway,24px) * -1), 112vh) rotate(360deg); opacity:.7; }
+  }
+
+  .app{
+    position:relative; z-index:3;
+    max-width:460px; margin:0 auto;
+    min-height:100vh;
+    display:flex; flex-direction:column;
+    padding:28px 20px 96px;
+  }
+
+  header{ text-align:center; margin-bottom:6px; }
+  h1{
+    font-family:'Shippori Mincho', serif;
+    font-weight:800;
+    font-size:2.6rem;
+    margin:0;
+    color:var(--ai);
+    letter-spacing:0.08em;
+    line-height:1;
+  }
+  h1 .romaji{
+    display:block;
+    font-family:'Noto Sans JP', sans-serif;
+    font-weight:500;
+    font-size:0.72rem;
+    letter-spacing:0.42em;
+    color:var(--shu);
+    margin-top:8px;
+  }
+  .tagline{
+    font-size:0.78rem;
+    color:var(--ai-mid);
+    letter-spacing:0.03em;
+    margin:10px 0 0;
+    font-weight:300;
+  }
+
+  /* ---------- screens ---------- */
+  .screen{ display:none; flex:1; flex-direction:column; align-items:center; animation:fadeIn .4s ease; }
+  .screen.active{ display:flex; }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+
+  /* ---------- lantern rig ---------- */
+  .lantern-rig{
+    position:relative;
+    margin:18px 0 4px;
+    display:flex; flex-direction:column; align-items:center;
+  }
+
+  .cord-wrap{
+    position:relative;
+    height:34px;
+    display:flex; justify-content:center;
+    z-index:5;
+  }
+  .rope{
+    width:3px; height:100%;
+    background:linear-gradient(var(--ai-deep), var(--ai));
+    border-radius:2px;
+  }
+  .tassel-btn{
+    position:absolute;
+    top:22px; left:50%;
+    transform:translateX(-50%);
+    width:46px; height:64px;
+    background:none; border:none; padding:0; margin:0; cursor:grab;
+    display:flex; flex-direction:column; align-items:center;
+    touch-action:none;
+    transition:transform .38s cubic-bezier(.34,1.56,.64,1);
+  }
+  .tassel-btn:active{ cursor:grabbing; }
+  .tassel-knot{
+    width:16px; height:16px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #E9604A, var(--shu) 55%, var(--shu-dark));
+    box-shadow:0 1px 3px rgba(0,0,0,.25);
+  }
+  .tassel-threads{
+    width:20px; height:30px; margin-top:-2px;
+    background:
+      repeating-linear-gradient(90deg, var(--shu) 0, var(--shu) 2px, var(--shu-dark) 2px, var(--shu-dark) 4px);
+    clip-path:polygon(15% 0, 85% 0, 100% 100%, 0 100%);
+  }
+  .tassel-charm{
+    margin-top:4px; font-size:11px; line-height:1;
+    filter:drop-shadow(0 1px 1px rgba(0,0,0,.15));
+  }
+  .tassel-btn:focus-visible{ outline:2px solid var(--shu); outline-offset:4px; border-radius:8px; }
+
+  .lantern{
+    position:relative;
+    width:172px;
+    display:flex; flex-direction:column; align-items:center;
+    filter:drop-shadow(0 14px 18px rgba(20,35,55,0.18));
+  }
+  .cap-top{
+    width:96px; height:16px;
+    background:linear-gradient(var(--ai-mid), var(--ai-deep));
+    border-radius:10px 10px 3px 3px;
+    position:relative; z-index:2;
+  }
+  .cap-top::after{
+    content:"";
+    position:absolute; top:-9px; left:50%; transform:translateX(-50%);
+    width:10px; height:10px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, var(--ember-light), var(--ember));
+  }
+  .panel-frame{
+    width:172px; height:206px;
+    background:linear-gradient(180deg, var(--ai-mid), var(--ai));
+    border-radius:8px;
+    padding:9px;
+    position:relative;
+    box-shadow:inset 0 0 0 2px var(--ai-deep);
+  }
+  .panel{
+    position:relative;
+    width:100%; height:100%;
+    border-radius:3px;
+    overflow:hidden;
+    background:linear-gradient(180deg, var(--washi-dark), #CDBB98);
+    transition:background 1.1s ease, box-shadow 1.1s ease;
+    box-shadow:inset 0 0 30px rgba(120,95,55,0.25);
+  }
+  .panel::before, .panel::after{
+    content:""; position:absolute; background:var(--ai); opacity:0.55; z-index:3;
+  }
+  .panel::before{ left:0; right:0; top:50%; height:2px; }
+  .panel::after{ top:0; bottom:0; left:50%; width:2px; }
+
+  .lantern.lit .panel{
+    background:radial-gradient(ellipse 70% 65% at 50% 55%,
+      var(--ember-hot), var(--ember-light) 45%, var(--ember) 78%, #C98A3B 100%);
+    box-shadow:inset 0 0 40px rgba(255,200,110,0.55), 0 0 calc(18px + var(--oil, .65) * 40px) rgba(231,169,74, calc(0.35 + var(--oil,.65) * .45));
+  }
+  .lantern.lit.bright .panel{
+    background:radial-gradient(ellipse 75% 70% at 50% 52%,
+      #FFF6DD, var(--ember-hot) 40%, var(--ember-light) 72%, var(--ember) 100%);
+    box-shadow:inset 0 0 55px rgba(255,225,160,0.75), 0 0 calc(28px + var(--oil,.65) * 60px) rgba(248,217,140, calc(0.5 + var(--oil,.65) * .5));
+  }
+
+  .flame{
+    position:absolute; left:50%; bottom:26px;
+    width:26px; height:38px;
+    transform:translateX(-50%);
+    background:linear-gradient(180deg, var(--ember-hot), var(--ember) 55%, var(--shu) 100%);
+    border-radius:50% 50% 50% 50% / 62% 62% 38% 38%;
+    opacity:0.15;
+    z-index:2;
+    transform-origin:bottom center;
+    transition:opacity .5s ease;
+  }
+  .lantern.lit .flame{ opacity:0.92; animation:flicker 2.6s ease-in-out infinite; }
+  .lantern.lit.bright .flame{ width:30px; height:46px; }
+  @keyframes flicker{
+    0%,100%{ transform:translateX(-50%) scale(1,1) rotate(-1deg); }
+    22%{ transform:translateX(-50%) scale(0.94,1.06) rotate(1.5deg); }
+    40%{ transform:translateX(-50%) scale(1.05,0.95) rotate(-2deg); }
+    58%{ transform:translateX(-50%) scale(0.97,1.03) rotate(1deg); }
+    76%{ transform:translateX(-50%) scale(1.03,0.97) rotate(-1deg); }
+  }
+  .sakura-motif{
+    position:absolute; z-index:1; opacity:0.16; color:var(--sakura-deep);
+    font-size:34px; pointer-events:none;
+  }
+  .sakura-motif.s1{ top:8px; left:6px; }
+  .sakura-motif.s2{ bottom:14px; right:2px; font-size:24px; }
+
+  .cap-bottom{
+    width:96px; height:16px;
+    background:linear-gradient(var(--ai-deep), var(--ai-mid));
+    border-radius:3px 3px 10px 10px;
+    position:relative; z-index:2;
+  }
+  .base-tassel{
+    width:2px; height:20px; margin-top:2px;
+    background:var(--shu);
+    position:relative;
+  }
+  .base-tassel::after{
+    content:"🌸";
+    position:absolute; top:16px; left:50%; transform:translateX(-50%);
+    font-size:13px; filter:saturate(1.3);
+  }
+
+  .status{
+    margin:16px 0 2px;
+    font-size:0.92rem;
+    text-align:center;
+    color:var(--ai);
+    font-weight:500;
+    min-height:1.4em;
+  }
+  .status .kanji{ font-family:'Shippori Mincho', serif; font-size:1.05em; color:var(--shu); }
+
+  /* ---------- mode chips (compact, on Light screen) ---------- */
+  .mode-row{
+    display:flex; gap:8px; justify-content:center; flex-wrap:wrap;
+    margin:16px 0 4px; width:100%;
+  }
+  .mode-chip{
+    font-family:'Noto Sans JP', sans-serif;
+    background:var(--washi-dark);
+    border:1px solid var(--washi-line);
+    color:var(--ai);
+    border-radius:20px;
+    padding:7px 13px;
+    font-size:0.72rem;
+    display:flex; flex-direction:column; align-items:center; gap:1px;
+    cursor:pointer;
+    transition:all .25s ease;
+  }
+  .mode-chip .k{ font-family:'Shippori Mincho', serif; font-size:0.95rem; }
+  .mode-chip:hover{ border-color:var(--sakura-deep); }
+  .mode-chip.active{
+    background:var(--ai);
+    border-color:var(--ai-deep);
+    color:var(--washi);
+  }
+  .mode-chip.active .k{ color:var(--ember-light); }
+  .mode-chip:focus-visible{ outline:2px solid var(--shu); outline-offset:2px; }
+
+  /* ---------- oil level ---------- */
+  .oil-control{
+    width:100%; max-width:300px;
+    margin:22px auto 6px;
+    text-align:center;
+  }
+  .oil-control label{
+    display:block; font-size:0.72rem; letter-spacing:0.14em;
+    color:var(--ai-mid); margin-bottom:10px; font-weight:500;
+  }
+  .oil-control label .en{ color:var(--sakura-deep); font-weight:400; margin-left:4px; }
+  .oil-track-wrap{
+    position:relative; display:flex; align-items:center; gap:10px;
+  }
+  input[type=range]{
+    -webkit-appearance:none; appearance:none;
+    width:100%; height:8px; border-radius:6px;
+    background:linear-gradient(90deg, var(--washi-line), var(--ember) calc(var(--oil,.65) * 100%), var(--washi-line) calc(var(--oil,.65) * 100%));
+    outline:none; cursor:pointer;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; appearance:none;
+    width:20px; height:20px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, var(--ember-light), var(--shu));
+    border:2px solid var(--washi);
+    box-shadow:0 1px 4px rgba(0,0,0,.3);
+    cursor:pointer;
+  }
+  input[type=range]::-moz-range-thumb{
+    width:20px; height:20px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, var(--ember-light), var(--shu));
+    border:2px solid var(--washi);
+    cursor:pointer;
+  }
+  .oil-dish{ font-size:20px; filter:drop-shadow(0 1px 1px rgba(0,0,0,.15)); }
+
+  /* ---------- modes screen ---------- */
+  .screen-title{
+    font-family:'Shippori Mincho', serif; font-size:1.3rem; color:var(--ai);
+    margin:8px 0 2px; text-align:center;
+  }
+  .screen-sub{ font-size:0.72rem; color:var(--ai-mid); margin:0 0 18px; text-align:center; letter-spacing:0.06em; }
+
+  .mode-grid{ width:100%; display:flex; flex-direction:column; gap:12px; }
+  .mode-card{
+    display:flex; align-items:center; gap:14px;
+    background:var(--washi-dark);
+    border:1px solid var(--washi-line);
+    border-left:4px solid var(--ai);
+    border-radius:10px;
+    padding:14px 16px;
+    cursor:pointer;
+    text-align:left;
+    transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+  }
+  .mode-card:hover{ transform:translateX(2px); box-shadow:0 3px 10px rgba(33,61,95,0.12); }
+  .mode-card.active{ border-left-color:var(--shu); background:#EFE1C6; }
+  .mode-card .mk{
+    font-family:'Shippori Mincho', serif; font-size:1.7rem; color:var(--ai);
+    min-width:64px; text-align:center;
+  }
+  .mode-card.active .mk{ color:var(--shu); }
+  .mode-card .mtext{ flex:1; }
+  .mode-card .mtext .name{ font-weight:700; font-size:0.85rem; color:var(--ink); }
+  .mode-card .mtext .romaji-sm{ font-size:0.66rem; color:var(--sakura-deep); letter-spacing:0.08em; margin-left:6px; }
+  .mode-card .mtext p{ margin:4px 0 0; font-size:0.74rem; color:var(--ai-mid); line-height:1.45; font-weight:300; }
+
+  /* ---------- info screen ---------- */
+  .info-body{ font-size:0.82rem; line-height:1.75; color:var(--ink); font-weight:300; }
+  .info-body strong{ color:var(--ai); font-weight:600; }
+  .swatches{ display:flex; flex-wrap:wrap; gap:10px; margin:16px 0 6px; }
+  .swatch{
+    flex:1 1 40%;
+    border-radius:8px; padding:10px 12px;
+    border:1px solid var(--washi-line);
+    display:flex; align-items:center; gap:9px;
+  }
+  .swatch .dot{ width:20px; height:20px; border-radius:50%; flex-shrink:0; box-shadow:inset 0 0 0 1px rgba(0,0,0,0.08); }
+  .swatch .lbl{ font-size:0.68rem; line-height:1.3; }
+  .swatch .lbl b{ display:block; font-size:0.76rem; }
+
+  /* ---------- fusuma bottom nav ---------- */
+  .fusuma-nav{
+    position:fixed; left:0; right:0; bottom:0; z-index:10;
+    max-width:460px; margin:0 auto;
+    height:74px;
+    display:flex;
+    background:var(--washi-dark);
+    border-top:1px solid var(--washi-line);
+    box-shadow:0 -6px 18px rgba(20,35,55,0.10);
+    overflow:hidden;
+  }
+  .fusuma-nav::before{
+    content:"";
+    position:absolute; inset:0;
+    background:
+      repeating-linear-gradient(90deg, rgba(33,61,95,0.05) 0, rgba(33,61,95,0.05) 1px, transparent 1px, transparent 33.33%);
+    pointer-events:none;
+  }
+  .fusuma-slider{
+    position:absolute; top:0; left:0; bottom:0; width:33.3333%;
+    background:linear-gradient(180deg, var(--ai-mid), var(--ai));
+    transition:transform .42s cubic-bezier(.65,0,.35,1);
+    box-shadow:inset 0 0 0 1px var(--ai-deep);
+  }
+  .fusuma-slider::after{
+    content:"";
+    position:absolute; inset:8px;
+    border:1px solid rgba(244,234,216,0.25);
+    border-radius:2px;
+  }
+  .nav-btn{
+    position:relative; flex:1; z-index:2;
+    background:none; border:none; cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+    font-family:'Noto Sans JP', sans-serif;
+    color:var(--ai-mid);
+    padding:10px 4px;
+    transition:color .3s ease;
+  }
+  .nav-btn .nk{ font-family:'Shippori Mincho', serif; font-size:1.15rem; color:var(--ai); transition:color .3s ease; }
+  .nav-btn span{ font-size:0.6rem; letter-spacing:0.1em; }
+  .nav-btn.active{ color:var(--washi); }
+  .nav-btn.active .nk{ color:var(--ember-light); }
+  .nav-btn:focus-visible{ outline:2px solid var(--shu); outline-offset:-2px; }
+
+  @media (max-width:360px){
+    h1{ font-size:2.2rem; }
+    .lantern{ width:150px; }
+    .panel-frame{ width:150px; height:182px; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .petal, .flame, .lantern.lit .flame{ animation:none !important; }
+    .tassel-btn, .fusuma-slider{ transition:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div id="ambientGlow"></div>
+<div class="petals" id="petals"></div>
+
+<div class="app">
+  <header>
+    <h1>行灯<span class="romaji">A N D O N</span></h1>
+    <p class="tagline">灯りを引く — pull the cord to bring it to life</p>
+  </header>
+
+  <!-- ===== LIGHT SCREEN ===== -->
+  <main class="screen active" id="screen-light">
+    <div class="lantern-rig">
+      <div class="cord-wrap">
+        <div class="rope"></div>
+        <button class="tassel-btn" id="tasselBtn" type="button" aria-pressed="false" aria-label="Pull the andon cord to turn the lantern on or off">
+          <div class="tassel-knot"></div>
+          <div class="tassel-threads"></div>
+          <div class="tassel-charm">🌸</div>
+        </button>
+      </div>
+
+      <div class="lantern" id="lantern">
+        <div class="cap-top"></div>
+        <div class="panel-frame">
+          <div class="panel" id="panel">
+            <span class="sakura-motif s1">🌸</span>
+            <span class="sakura-motif s2">🌸</span>
+            <div class="flame" id="flame"></div>
+          </div>
+        </div>
+        <div class="cap-bottom"></div>
+        <div class="base-tassel"></div>
+      </div>
+    </div>
+
+    <p class="status" id="statusText">消灯 <span class="kanji">—</span> unlit</p>
+
+    <div class="mode-row" id="modeRow">
+      <button class="mode-chip active" data-mode="andon" type="button"><span class="k">行灯</span>Andon</button>
+      <button class="mode-chip" data-mode="chochin" type="button"><span class="k">提灯</span>Chōchin</button>
+      <button class="mode-chip" data-mode="hayauchi" type="button"><span class="k">早打ち</span>Hayauchi</button>
+      <button class="mode-chip" data-mode="kikyu" type="button"><span class="k">危急</span>Kikyū</button>
+    </div>
+
+    <div class="oil-control">
+      <label>油量 <span class="en">Oil Level</span></label>
+      <div class="oil-track-wrap">
+        <span class="oil-dish">🪔</span>
+        <input type="range" id="oilSlider" min="15" max="100" value="65" aria-label="Oil level, controls brightness">
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== MODES SCREEN ===== -->
+  <main class="screen" id="screen-modes">
+    <h2 class="screen-title">灯の型</h2>
+    <p class="screen-sub">FOUR WAYS TO CARRY THE FLAME</p>
+    <div class="mode-grid">
+      <div class="mode-card active" data-mode="andon">
+        <div class="mk">行灯</div>
+        <div class="mtext">
+          <span class="name">Andon<span class="romaji-sm">STEADY · LOW</span></span>
+          <p>A steady low flame for reading close at hand.</p>
+        </div>
+      </div>
+      <div class="mode-card" data-mode="chochin">
+        <div class="mk">提灯</div>
+        <div class="mtext">
+          <span class="name">Chōchin<span class="romaji-sm">STEADY · HIGH</span></span>
+          <p>A steady bright flame, carried to light the way ahead.</p>
+        </div>
+      </div>
+      <div class="mode-card" data-mode="hayauchi">
+        <div class="mk">早打ち</div>
+        <div class="mtext">
+          <span class="name">Hayauchi<span class="romaji-sm">RAPID STRIKE</span></span>
+          <p>Flashes fast and sharp — a rapid strike to catch the eye.</p>
+        </div>
+      </div>
+      <div class="mode-card" data-mode="kikyu">
+        <div class="mk">危急</div>
+        <div class="mtext">
+          <span class="name">Kikyū<span class="romaji-sm">URGENT · SOS</span></span>
+          <p>The urgent signal — three short, three long, three short.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== INFO SCREEN ===== -->
+  <main class="screen" id="screen-info">
+    <h2 class="screen-title">由来</h2>
+    <p class="screen-sub">YURAI · WHERE THIS CAME FROM</p>
+    <div class="info-body">
+      <p><strong>行灯 Andon</strong> were the paper-and-wood lanterns that lit Edo-period rooms and doorways — a small oil wick glowing behind a washi paper panel. This light borrows that idea instead of a bulb icon: a lantern you actually light by hand.</p>
+      <p>Pull the red cord to light it. Choose how it burns below. Set the oil level to bring the flame up or down.</p>
+      <div class="swatches">
+        <div class="swatch"><span class="dot" style="background:var(--washi-dark)"></span><span class="lbl"><b>Washi 和紙</b>paper cream</span></div>
+        <div class="swatch"><span class="dot" style="background:var(--ai)"></span><span class="lbl"><b>Ai-zome 藍染</b>indigo dye</span></div>
+        <div class="swatch"><span class="dot" style="background:var(--shu)"></span><span class="lbl"><b>Shu 朱</b>vermillion lacquer</span></div>
+        <div class="swatch"><span class="dot" style="background:var(--ember)"></span><span class="lbl"><b>Ember 灯</b>oil flame gold</span></div>
+        <div class="swatch"><span class="dot" style="background:var(--sakura-deep)"></span><span class="lbl"><b>Sakura 桜</b>cherry blossom</span></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<nav class="fusuma-nav" aria-label="Primary">
+  <div class="fusuma-slider" id="fusumaSlider"></div>
+  <button class="nav-btn active" data-screen="light" data-index="0" type="button"><span class="nk">灯り</span><span>AKARI</span></button>
+  <button class="nav-btn" data-screen="modes" data-index="1" type="button"><span class="nk">型</span><span>KATA</span></button>
+  <button class="nav-btn" data-screen="info" data-index="2" type="button"><span class="nk">由来</span><span>YURAI</span></button>
+</nav>
+
+<script>
+(function(){
+  "use strict";
+
+  var state = { on:false, mode:'andon', oil:65 };
+  var flashTimers = [];
+
+  var lantern = document.getElementById('lantern');
+  var statusText = document.getElementById('statusText');
+  var ambientGlow = document.getElementById('ambientGlow');
+  var oilSlider = document.getElementById('oilSlider');
+  var tasselBtn = document.getElementById('tasselBtn');
+
+  var modeInfo = {
+    andon:   { k:'行灯', romaji:'Andon',   phrase:'steady low, a reading light' },
+    chochin: { k:'提灯', romaji:'Chōchin', phrase:'steady high, lighting the way' },
+    hayauchi:{ k:'早打ち', romaji:'Hayauchi', phrase:'rapid strike' },
+    kikyu:   { k:'危急', romaji:'Kikyū',   phrase:'SOS, the urgent signal' }
+  };
+
+  function clearTimers(){
+    flashTimers.forEach(function(id){ clearTimeout(id); clearInterval(id); });
+    flashTimers = [];
+  }
+
+  function setLit(litBool){
+    lantern.classList.toggle('lit', litBool);
+    if(state.mode === 'chochin'){
+      ambientGlow.style.opacity = litBool ? String(0.35 + state.oil/100 * 0.55) : '0';
+    } else if(state.mode === 'andon'){
+      ambientGlow.style.opacity = litBool ? String(0.18 + state.oil/100 * 0.3) : '0';
+    } else {
+      ambientGlow.style.opacity = litBool ? String(0.4 + state.oil/100 * 0.4) : '0';
+    }
+  }
+
+  function applyOilVisual(){
+    document.documentElement.style.setProperty('--oil', String(state.oil/100));
+    oilSlider.style.setProperty('--oil', String(state.oil/100));
+  }
+
+  function updateStatus(){
+    if(!state.on){
+      statusText.innerHTML = '消灯 <span class="kanji">—</span> unlit';
+      return;
+    }
+    var m = modeInfo[state.mode];
+    statusText.innerHTML = '<span class="kanji">' + m.k + '</span> — ' + m.romaji + ' · ' + m.phrase;
+  }
+
+  function runSOS(){
+    var seq = [
+      150,150, 150,150, 150,400,
+      400,150, 400,150, 400,400,
+      150,150, 150,150, 150,1000
+    ];
+    var i = 0;
+    function tick(){
+      if(!(state.on && state.mode === 'kikyu')) return;
+      var on = (i % 2 === 0);
+      setLit(on);
+      var d = seq[i % seq.length];
+      i++;
+      var id = setTimeout(tick, d);
+      flashTimers.push(id);
+    }
+    tick();
+  }
+
+  function startMode(){
+    clearTimers();
+    lantern.classList.remove('bright');
+    if(!state.on){
+      setLit(false);
+      return;
+    }
+    switch(state.mode){
+      case 'andon':
+        setLit(true);
+        break;
+      case 'chochin':
+        lantern.classList.add('bright');
+        setLit(true);
+        break;
+      case 'hayauchi': {
+        var on = true;
+        setLit(on);
+        var id = setInterval(function(){
+          on = !on;
+          setLit(on);
+        }, 130);
+        flashTimers.push(id);
+        break;
+      }
+      case 'kikyu':
+        runSOS();
+        break;
+    }
+  }
+
+  function togglePower(force){
+    state.on = (typeof force === 'boolean') ? force : !state.on;
+    tasselBtn.setAttribute('aria-pressed', String(state.on));
+    updateStatus();
+    startMode();
+  }
+
+  function setMode(mode){
+    state.mode = mode;
+    document.querySelectorAll('.mode-chip').forEach(function(el){
+      el.classList.toggle('active', el.dataset.mode === mode);
+    });
+    document.querySelectorAll('.mode-card').forEach(function(el){
+      el.classList.toggle('active', el.dataset.mode === mode);
+    });
+    updateStatus();
+    if(state.on) startMode();
+  }
+
+  // ---- mode chip / card clicks ----
+  document.querySelectorAll('.mode-chip').forEach(function(btn){
+    btn.addEventListener('click', function(){ setMode(btn.dataset.mode); });
+  });
+  document.querySelectorAll('.mode-card').forEach(function(card){
+    card.addEventListener('click', function(){
+      setMode(card.dataset.mode);
+      if(!state.on) togglePower(true);
+      showScreen('light', 0);
+    });
+  });
+
+  // ---- oil slider ----
+  oilSlider.addEventListener('input', function(e){
+    state.oil = Number(e.target.value);
+    applyOilVisual();
+    if(state.on) setLit(lantern.classList.contains('lit') || state.mode==='andon' || state.mode==='chochin');
+  });
+  applyOilVisual();
+
+  // ---- pull cord: drag + click/keyboard ----
+  var dragging = false, startY = 0, moved = 0, suppressClick = false;
+
+  function pointerY(e){ return e.touches ? e.touches[0].clientY : e.clientY; }
+
+  tasselBtn.addEventListener('pointerdown', function(e){
+    dragging = true; moved = 0;
+    startY = pointerY(e);
+    tasselBtn.style.transition = 'none';
+    try{ tasselBtn.setPointerCapture(e.pointerId); }catch(err){}
+  });
+  tasselBtn.addEventListener('pointermove', function(e){
+    if(!dragging) return;
+    var y = pointerY(e);
+    var delta = Math.max(0, Math.min(70, y - startY));
+    moved = delta;
+    tasselBtn.style.transform = 'translateX(-50%) translateY(' + delta + 'px)';
+  });
+  function endDrag(){
+    if(!dragging) return;
+    dragging = false;
+    tasselBtn.style.transition = '';
+    tasselBtn.style.transform = 'translateX(-50%) translateY(0px)';
+    if(moved > 26){
+      togglePower();
+      suppressClick = true;
+      setTimeout(function(){ suppressClick = false; }, 250);
+    }
+    moved = 0;
+  }
+  tasselBtn.addEventListener('pointerup', endDrag);
+  tasselBtn.addEventListener('pointercancel', endDrag);
+  tasselBtn.addEventListener('click', function(){
+    if(suppressClick){ suppressClick = false; return; }
+    // tap or keyboard activation: play a quick pull animation, then toggle
+    tasselBtn.style.transform = 'translateX(-50%) translateY(46px)';
+    setTimeout(function(){
+      tasselBtn.style.transform = 'translateX(-50%) translateY(0px)';
+    }, 220);
+    togglePower();
+  });
+
+  // ---- fusuma nav ----
+  var slider = document.getElementById('fusumaSlider');
+  var navBtns = document.querySelectorAll('.nav-btn');
+  var screens = document.querySelectorAll('.screen');
+
+  function showScreen(name, index){
+    screens.forEach(function(s){ s.classList.toggle('active', s.id === 'screen-' + name); });
+    navBtns.forEach(function(b){ b.classList.toggle('active', b.dataset.screen === name); });
+    slider.style.transform = 'translateX(' + (index * 100) + '%)';
+  }
+  navBtns.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      showScreen(btn.dataset.screen, Number(btn.dataset.index));
+    });
+  });
+
+  // ---- falling sakura petals ----
+  var petalLayer = document.getElementById('petals');
+  function spawnPetal(){
+    var p = document.createElement('div');
+    p.className = 'petal';
+    var size = 8 + Math.random() * 10;
+    p.style.width = size + 'px';
+    p.style.height = size + 'px';
+    p.style.left = (Math.random() * 100) + 'vw';
+    var duration = 8 + Math.random() * 8;
+    p.style.animationDuration = duration + 's';
+    p.style.setProperty('--sway', (18 + Math.random() * 40) + 'px');
+    petalLayer.appendChild(p);
+    setTimeout(function(){ p.remove(); }, duration * 1000 + 200);
+  }
+  for(var i=0;i<6;i++){ setTimeout(spawnPetal, i * 500); }
+  setInterval(spawnPetal, 1400);
+
+  // initial state
+  updateStatus();
+})();
+</script>
+</body>
+</html>

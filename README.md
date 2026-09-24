@@ -8,12 +8,6 @@
   A team-built interactive Andon lantern experience created for the <b>RETRO REBUILD</b> competition.
 </p>
 
-<p align="center">
-  <a href="YOUR_LIVE_DEMO_LINK">🌐 Live Demo</a>
-  &nbsp;&nbsp;•&nbsp;&nbsp;
-  <a href="YOUR_GITHUB_REPO_LINK">💻 Source Code</a>
-</p>
-
 ---
 
 ## 🏮 The Idea
